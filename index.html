@@ -161,14 +161,17 @@
             if (e.key === 'Enter') sendMessage();
         }
 
-        // Automatic Space Fixer for cramped Hinglish text
+        // Advanced Hinglish Spacing Fixer
         function fixSpacing(text) {
             return text
-                // Insert space between lowercase and uppercase letters (e.g., "Kaiseho?Miss" -> "Kaiseho? Miss")
+                // Split common stuck words using regex patterns
+                .replace(/(kaise|kya|kuch|tumhe|tumhain|karna|karrahi|rahi|hain|ho|main|mera|meri|mujhe|abhi|bhi|aur|iska|uska|woh|yeh)(ho|re|jaan|ne|se|ko|hi|bhi|toh|na|hai|hain|ki|ka|ke)/gi, '$1 $2')
+                .replace(/(miss|kiya|kya|bata|sun|dekh|bol)(kiya|hain|ho|na|kya|karna)/gi, '$1 $2')
+                // General camelCase or stuck letters fix
                 .replace(/([a-z])([A-Z])/g, '$1 $2')
-                // Insert space between punctuation and letters (e.g., "ho?Kaise" -> "ho? Kaise")
+                // Fix punctuation spacing
                 .replace(/([?!.,])([a-zA-Z])/g, '$1 $2')
-                // Insert space between letters and emojis/symbols if stuck
+                // Fix emoji spacing
                 .replace(/([a-zA-Z])([❤️✨🥺😊😉🔥])/, '$1 $2');
         }
 
@@ -289,7 +292,7 @@
 
                 if (data.choices && data.choices[0].message) {
                     const rawReply = data.choices[0].message.content;
-                    const reply = fixSpacing(rawReply); // Automatically fixes spacing issues!
+                    const reply = fixSpacing(rawReply);
                     
                     if (lastUserTickElement) {
                         lastUserTickElement.innerText = '✓✓';
