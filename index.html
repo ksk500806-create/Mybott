@@ -161,18 +161,21 @@
             if (e.key === 'Enter') sendMessage();
         }
 
-        // Advanced Hinglish Spacing Fixer
+        // Bulletproof Permanent Spacing Fixer
         function fixSpacing(text) {
+            if (!text) return "";
             return text
-                // Split common stuck words using regex patterns
-                .replace(/(kaise|kya|kuch|tumhe|tumhain|karna|karrahi|rahi|hain|ho|main|mera|meri|mujhe|abhi|bhi|aur|iska|uska|woh|yeh)(ho|re|jaan|ne|se|ko|hi|bhi|toh|na|hai|hain|ki|ka|ke)/gi, '$1 $2')
-                .replace(/(miss|kiya|kya|bata|sun|dekh|bol)(kiya|hain|ho|na|kya|karna)/gi, '$1 $2')
-                // General camelCase or stuck letters fix
+                // Force space before capital letters if stuck
                 .replace(/([a-z])([A-Z])/g, '$1 $2')
-                // Fix punctuation spacing
+                // Force space after punctuation marks
                 .replace(/([?!.,])([a-zA-Z])/g, '$1 $2')
-                // Fix emoji spacing
-                .replace(/([a-zA-Z])([❤️✨🥺😊😉🔥])/, '$1 $2');
+                // Force space before/after emojis
+                .replace(/([a-zA-Z])([❤️✨🥺😊😉🔥💕so])/g, '$1 $2')
+                // Split common stuck Hinglish word combinations
+                .replace(/(kaise|kya|kuch|tumhe|tumhein|karna|karrahi|rahi|hain|ho|main|mera|meri|mujhe|abhi|bhi|aur|iska|uska|woh|yeh|hi|re|jaan|ne|se|ko|ne|ki|ka|ke|tha|thi|aaj|miss|kiya|maine)(ho|re|jaan|ne|se|ko|hi|bhi|toh|na|hai|hain|ki|ka|ke|rahi|ho|mere|meri|tumhe|tumhein|aaj|miss|kiya|maine)/gi, '$1 $2')
+                .replace(/(kaise|kya|kuch|tumhe|tumhein|karna|rahi|hain|ho|main|mera|meri|mujhe|abhi|bhi|aur|iska|uska|woh|yeh|hi|re|jaan)(ho|re|jaan|ne|se|ko|hi|bhi|toh|na|hai|hain|ki|ka|ke)/gi, '$1 $2')
+                // Clean up double spaces if any created
+                .replace(/\s+/g, ' ');
         }
 
         function startNewChat() {
@@ -340,4 +343,5 @@
         }
     </script>
 </body>
-</html>
+    </html>
+    
