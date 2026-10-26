@@ -36,13 +36,13 @@
 
         /* Chat Container */
         #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 80%; padding: 12px 16px 24px 16px; border-radius: 14px; line-height: 1.5; font-size: 0.95rem; word-wrap: break-word; position: relative; }
+        .message { max-width: 80%; padding: 10px 14px; border-radius: 14px; line-height: 1.4; font-size: 0.95rem; word-wrap: break-word; display: flex; flex-direction: column; gap: 4px; }
         .user { background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); }
         .assistant { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(5px); color: #f8fafc; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         
-        /* Ticks Styling */
-        .msg-time { position: absolute; bottom: 4px; right: 12px; font-size: 0.7rem; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 3px; }
-        .assistant .msg-time { color: #94a3b8; }
+        /* Ticks & Time Styling */
+        .msg-footer { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .assistant .msg-footer { color: #94a3b8; justify-content: flex-start; }
         .tick { font-size: 0.75rem; font-weight: bold; }
         .tick.blue { color: #38bdf8; }
 
@@ -88,8 +88,8 @@
 
     <div id="chat-container">
         <div class="message assistant">
-            👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?
-            <span class="msg-time">Just now <span class="tick blue">✓✓</span></span>
+            <span>👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?</span>
+            <span class="msg-footer">Just now</span>
         </div>
     </div>
 
@@ -112,18 +112,19 @@
             </div>
             <div>
                 <label>System Prompt (Personality)</label>
-                <textarea id="system-prompt">Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha ek real ladki ki tarah natural, short, aur sweet messages bhejo. Bar-baar "Sab theek?" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.</textarea>
+                <textarea id="system-prompt">Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing (spaces) ke sath natural, short, aur sweet messages bhejo. Bar-baar "Sab theek?" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.</textarea>
             </div>
             <button class="save-btn" onclick="saveSettings()">Save & Close</button>
         </div>
     </div>
 
     <script>
-        const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha ek real ladki ki tarah natural, short, aur sweet messages bhejo. Bar-baar \"Sab theek?\" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
+        const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing (spaces) ke sath natural, short, aur sweet messages bhejo. Bar-baar \"Sab theek?\" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
         const WELCOME_MSG = "👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?";
         
         let chatHistory = [];
         let allChats = JSON.parse(localStorage.getItem('savedChats')) || [];
+        let lastUserTickElement = null;
 
         window.onload = function() {
             if(!localStorage.getItem('sysPrompt')) {
@@ -167,10 +168,11 @@
                 renderChatList();
             }
             chatHistory = [];
+            lastUserTickElement = null;
             document.getElementById('chat-container').innerHTML = `
                 <div class="message assistant">
-                    ${WELCOME_MSG}
-                    <span class="msg-time">Just now <span class="tick blue">✓✓</span></span>
+                    <span>${WELCOME_MSG}</span>
+                    <span class="msg-footer">Just now</span>
                 </div>`;
             if(document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
         }
@@ -191,11 +193,23 @@
             chatHistory = [...allChats[index].messages];
             const container = document.getElementById('chat-container');
             container.innerHTML = '';
-            chatHistory.forEach(msg => {
-                const div = document.createElement('div');
+            lastUserTickElement = null;
+            
+            chatHistory.forEach((msg, idx) => {
                 const isUser = msg.role === 'user';
+                const div = document.createElement('div');
                 div.className = `message ${isUser ? 'user' : 'assistant'}`;
-                div.innerHTML = `${escapeHtml(msg.content)} <span class="msg-time">Just now <span class="tick ${isUser ? '' : 'blue'}">${isUser ? '✓' : '✓✓'}</span></span>`;
+                
+                if (isUser) {
+                    // Check if this is the very last user message in loaded history
+                    const isLastUser = idx === chatHistory.length - 1 || (idx < chatHistory.length - 1 && chatHistory.slice(idx+1).every(m => m.role === 'user'));
+                    const tickSymbol = isLastUser ? '✓✓' : '✓';
+                    const tickClass = isLastUser ? 'tick blue' : 'tick';
+                    div.innerHTML = `<span>${escapeHtml(msg.content)}</span><span class="msg-footer">Just now <span class="${tickClass}">${tickSymbol}</span></span>`;
+                    if (isLastUser) lastUserTickElement = div.querySelector('.tick');
+                } else {
+                    div.innerHTML = `<span>${escapeHtml(msg.content)}</span><span class="msg-footer">Just now</span>`;
+                }
                 container.appendChild(div);
             });
             toggleSidebar();
@@ -219,11 +233,31 @@
                 return;
             }
 
-            appendMessage(text, 'user', '✓');
+            // If there was a previous user tick, downgrade it to single tick since a new message is coming
+            if (lastUserTickElement) {
+                lastUserTickElement.innerText = '✓';
+                lastUserTickElement.className = 'tick';
+            }
+
+            // Append user message with single tick
+            const container = document.getElementById('chat-container');
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user';
+            userDiv.innerHTML = `<span>${escapeHtml(text)}</span><span class="msg-footer">Just now <span class="tick">✓</span></span>`;
+            container.appendChild(userDiv);
+            lastUserTickElement = userDiv.querySelector('.tick');
+            
             inputField.value = '';
+            container.scrollTop = container.scrollHeight;
             chatHistory.push({ role: 'user', content: text });
 
-            const loadingId = appendMessage('Typing...', 'assistant', '✓✓');
+            // Show typing indicator for assistant
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message assistant';
+            loadingDiv.id = 'loading-msg';
+            loadingDiv.innerHTML = `<span>Typing...</span><span class="msg-footer">Just now</span>`;
+            container.appendChild(loadingDiv);
+            container.scrollTop = container.scrollHeight;
 
             try {
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -242,45 +276,45 @@
                 });
 
                 const data = await response.json();
-                document.getElementById(loadingId).remove();
+                document.getElementById('loading-msg').remove();
 
                 if (data.choices && data.choices[0].message) {
                     const reply = data.choices[0].message.content;
+                    
+                    // Now update user message tick to double blue tick as response arrived!
+                    if (lastUserTickElement) {
+                        lastUserTickElement.innerText = '✓✓';
+                        lastUserTickElement.className = 'tick blue';
+                    }
+
                     appendTypewriterMessage(reply, 'assistant');
                     chatHistory.push({ role: 'assistant', content: reply });
                 } else {
-                    appendMessage("Oops! Model error aa gaya. Model ID check karo! 🔄", 'assistant', '✓✓');
+                    appendSimpleMessage("Oops! Model error aa gaya. Model ID check karo! 🔄", 'assistant');
                 }
             } catch (err) {
-                document.getElementById(loadingId).remove();
-                appendMessage("Network error ho gaya.", 'assistant', '✓✓');
+                document.getElementById('loading-msg').remove();
+                appendSimpleMessage("Network error ho gaya.", 'assistant');
             }
         }
 
-        function appendMessage(text, sender, tickSymbol) {
+        function appendSimpleMessage(text, sender) {
             const container = document.getElementById('chat-container');
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${sender}`;
-            msgDiv.id = 'msg-' + Date.now() + Math.random();
-            
-            const isBlue = sender === 'assistant' ? 'blue' : '';
-            msgDiv.innerHTML = `${escapeHtml(text)} <span class="msg-time">Just now <span class="tick ${isBlue}">${tickSymbol}</span></span>`;
-            
+            msgDiv.innerHTML = `<span>${escapeHtml(text)}</span><span class="msg-footer">Just now</span>`;
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
-            return msgDiv.id;
         }
 
         function appendTypewriterMessage(fullText, sender) {
             const container = document.getElementById('chat-container');
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${sender}`;
-            msgDiv.id = 'msg-' + Date.now() + Math.random();
-            
-            msgDiv.innerHTML = `<span class="text-content"></span> <span class="msg-time">Just now <span class="tick blue">✓✓</span></span>`;
+            msgDiv.innerHTML = `<span></span><span class="msg-footer">Just now</span>`;
             container.appendChild(msgDiv);
             
-            const textSpan = msgDiv.querySelector('.text-content');
+            const textSpan = msgDiv.querySelector('span');
             let i = 0;
             function typeWriter() {
                 if (i < fullText.length) {
@@ -294,4 +328,5 @@
         }
     </script>
 </body>
-</html>
+                    </html>
+                    
