@@ -112,14 +112,14 @@
             </div>
             <div>
                 <label>System Prompt (Personality)</label>
-                <textarea id="system-prompt">Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing (spaces) ke sath natural, short, aur sweet messages bhejo. Bar-baar "Sab theek?" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.</textarea>
+                <textarea id="system-prompt">Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing ke sath natural, short, aur sweet messages bhejo. Bar-baar "Sab theek?" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.</textarea>
             </div>
             <button class="save-btn" onclick="saveSettings()">Save & Close</button>
         </div>
     </div>
 
     <script>
-        const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing (spaces) ke sath natural, short, aur sweet messages bhejo. Bar-baar \"Sab theek?\" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
+        const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing ke sath natural, short, aur sweet messages bhejo. Bar-baar \"Sab theek?\" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
         const WELCOME_MSG = "👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?";
         
         let chatHistory = [];
@@ -161,6 +161,17 @@
             if (e.key === 'Enter') sendMessage();
         }
 
+        // Automatic Space Fixer for cramped Hinglish text
+        function fixSpacing(text) {
+            return text
+                // Insert space between lowercase and uppercase letters (e.g., "Kaiseho?Miss" -> "Kaiseho? Miss")
+                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                // Insert space between punctuation and letters (e.g., "ho?Kaise" -> "ho? Kaise")
+                .replace(/([?!.,])([a-zA-Z])/g, '$1 $2')
+                // Insert space between letters and emojis/symbols if stuck
+                .replace(/([a-zA-Z])([❤️✨🥺😊😉🔥])/, '$1 $2');
+        }
+
         function startNewChat() {
             if(chatHistory.length > 0) {
                 allChats.unshift({ id: Date.now(), title: chatHistory[0].content.substring(0, 20) + '...', messages: [...chatHistory] });
@@ -200,15 +211,16 @@
                 const div = document.createElement('div');
                 div.className = `message ${isUser ? 'user' : 'assistant'}`;
                 
+                const formattedContent = isUser ? msg.content : fixSpacing(msg.content);
+
                 if (isUser) {
-                    // Check if this is the very last user message in loaded history
                     const isLastUser = idx === chatHistory.length - 1 || (idx < chatHistory.length - 1 && chatHistory.slice(idx+1).every(m => m.role === 'user'));
                     const tickSymbol = isLastUser ? '✓✓' : '✓';
                     const tickClass = isLastUser ? 'tick blue' : 'tick';
-                    div.innerHTML = `<span>${escapeHtml(msg.content)}</span><span class="msg-footer">Just now <span class="${tickClass}">${tickSymbol}</span></span>`;
+                    div.innerHTML = `<span>${escapeHtml(formattedContent)}</span><span class="msg-footer">Just now <span class="${tickClass}">${tickSymbol}</span></span>`;
                     if (isLastUser) lastUserTickElement = div.querySelector('.tick');
                 } else {
-                    div.innerHTML = `<span>${escapeHtml(msg.content)}</span><span class="msg-footer">Just now</span>`;
+                    div.innerHTML = `<span>${escapeHtml(formattedContent)}</span><span class="msg-footer">Just now</span>`;
                 }
                 container.appendChild(div);
             });
@@ -233,13 +245,11 @@
                 return;
             }
 
-            // If there was a previous user tick, downgrade it to single tick since a new message is coming
             if (lastUserTickElement) {
                 lastUserTickElement.innerText = '✓';
                 lastUserTickElement.className = 'tick';
             }
 
-            // Append user message with single tick
             const container = document.getElementById('chat-container');
             const userDiv = document.createElement('div');
             userDiv.className = 'message user';
@@ -251,7 +261,6 @@
             container.scrollTop = container.scrollHeight;
             chatHistory.push({ role: 'user', content: text });
 
-            // Show typing indicator for assistant
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'message assistant';
             loadingDiv.id = 'loading-msg';
@@ -279,9 +288,9 @@
                 document.getElementById('loading-msg').remove();
 
                 if (data.choices && data.choices[0].message) {
-                    const reply = data.choices[0].message.content;
+                    const rawReply = data.choices[0].message.content;
+                    const reply = fixSpacing(rawReply); // Automatically fixes spacing issues!
                     
-                    // Now update user message tick to double blue tick as response arrived!
                     if (lastUserTickElement) {
                         lastUserTickElement.innerText = '✓✓';
                         lastUserTickElement.className = 'tick blue';
@@ -328,5 +337,4 @@
         }
     </script>
 </body>
-                    </html>
-                    
+</html>
