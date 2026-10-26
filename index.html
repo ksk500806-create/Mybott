@@ -36,7 +36,7 @@
 
         /* Chat Container */
         #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 80%; padding: 10px 14px; border-radius: 14px; line-height: 1.4; font-size: 0.95rem; word-wrap: break-word; display: flex; flex-direction: column; gap: 4px; }
+        .message { max-width: 80%; padding: 10px 14px; border-radius: 14px; line-height: 1.4; font-size: 0.95rem; word-wrap: break-word; word-break: break-word; white-space: pre-wrap; display: flex; flex-direction: column; gap: 4px; }
         .user { background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); }
         .assistant { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(5px); color: #f8fafc; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #334155; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         
@@ -108,18 +108,18 @@
             </div>
             <div>
                 <label>Model ID</label>
-                <input type="text" id="model-id" value="nousresearch/hermes-3-llama-3.1-8b:free">
+                <input type="text" id="model-id" value="deepseek/deepseek-chat">
             </div>
             <div>
                 <label>System Prompt (Personality)</label>
-                <textarea id="system-prompt">Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing ke sath natural, short, aur sweet messages bhejo. Bar-baar "Sab theek?" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.</textarea>
+                <textarea id="system-prompt">Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Har word ke baad zaroori space dekar natural, short, aur sweet messages bhejo. Playful, loving aur witty vibe mein baat karo. Kabhi mat kehna ki tum AI ho.</textarea>
             </div>
             <button class="save-btn" onclick="saveSettings()">Save & Close</button>
         </div>
     </div>
 
     <script>
-        const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha words ke beech proper spacing ke sath natural, short, aur sweet messages bhejo. Bar-baar \"Sab theek?\" ya formal sawal mat pucho, balki playful, loving aur witty tareeke se chat karo. Tumhein ache se pata hai ki tum ek female ho, isliye hamesha usi vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
+        const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Har word ke baad zaroori space dekar natural, short, aur sweet messages bhejo. Playful, loving aur witty vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
         const WELCOME_MSG = "👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?";
         
         let chatHistory = [];
@@ -161,21 +161,13 @@
             if (e.key === 'Enter') sendMessage();
         }
 
-        // Bulletproof Permanent Spacing Fixer
-        function fixSpacing(text) {
+        // Clean formatting without breaking original AI spaces
+        function cleanFormatting(text) {
             if (!text) return "";
             return text
-                // Force space before capital letters if stuck
-                .replace(/([a-z])([A-Z])/g, '$1 $2')
-                // Force space after punctuation marks
-                .replace(/([?!.,])([a-zA-Z])/g, '$1 $2')
-                // Force space before/after emojis
-                .replace(/([a-zA-Z])([❤️✨🥺😊😉🔥💕so])/g, '$1 $2')
-                // Split common stuck Hinglish word combinations
-                .replace(/(kaise|kya|kuch|tumhe|tumhein|karna|karrahi|rahi|hain|ho|main|mera|meri|mujhe|abhi|bhi|aur|iska|uska|woh|yeh|hi|re|jaan|ne|se|ko|ne|ki|ka|ke|tha|thi|aaj|miss|kiya|maine)(ho|re|jaan|ne|se|ko|hi|bhi|toh|na|hai|hain|ki|ka|ke|rahi|ho|mere|meri|tumhe|tumhein|aaj|miss|kiya|maine)/gi, '$1 $2')
-                .replace(/(kaise|kya|kuch|tumhe|tumhein|karna|rahi|hain|ho|main|mera|meri|mujhe|abhi|bhi|aur|iska|uska|woh|yeh|hi|re|jaan)(ho|re|jaan|ne|se|ko|hi|bhi|toh|na|hai|hain|ki|ka|ke)/gi, '$1 $2')
-                // Clean up double spaces if any created
-                .replace(/\s+/g, ' ');
+                .replace(/\*/g, '') // remove weird model markdown asterisks
+                .replace(/([?!.,])([a-zA-Z])/g, '$1 $2') // ensure space after punctuation
+                .replace(/\s+/g, ' '); // normalize double spaces
         }
 
         function startNewChat() {
@@ -217,7 +209,7 @@
                 const div = document.createElement('div');
                 div.className = `message ${isUser ? 'user' : 'assistant'}`;
                 
-                const formattedContent = isUser ? msg.content : fixSpacing(msg.content);
+                const formattedContent = isUser ? msg.content : cleanFormatting(msg.content);
 
                 if (isUser) {
                     const isLastUser = idx === chatHistory.length - 1 || (idx < chatHistory.length - 1 && chatHistory.slice(idx+1).every(m => m.role === 'user'));
@@ -295,7 +287,7 @@
 
                 if (data.choices && data.choices[0].message) {
                     const rawReply = data.choices[0].message.content;
-                    const reply = fixSpacing(rawReply);
+                    const reply = cleanFormatting(rawReply);
                     
                     if (lastUserTickElement) {
                         lastUserTickElement.innerText = '✓✓';
@@ -322,6 +314,7 @@
             container.scrollTop = container.scrollHeight;
         }
 
+        // Word-by-word renderer to preserve natural spacing 100%
         function appendTypewriterMessage(fullText, sender) {
             const container = document.getElementById('chat-container');
             const msgDiv = document.createElement('div');
@@ -330,18 +323,22 @@
             container.appendChild(msgDiv);
             
             const textSpan = msgDiv.querySelector('span');
-            let i = 0;
-            function typeWriter() {
-                if (i < fullText.length) {
-                    textSpan.innerText += fullText.charAt(i);
-                    i++;
+            
+            // Split by words/tokens keeping spaces intact
+            const words = fullText.split(' ');
+            let index = 0;
+
+            function renderWords() {
+                if (index < words.length) {
+                    textSpan.innerText += (index === 0 ? "" : " ") + words[index];
+                    index++;
                     container.scrollTop = container.scrollHeight;
-                    setTimeout(typeWriter, 15);
+                    setTimeout(renderWords, 40);
                 }
             }
-            typeWriter();
+            renderWords();
         }
     </script>
 </body>
-    </html>
-    
+                                                                    </html>
+                                                                    
