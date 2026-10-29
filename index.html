@@ -50,7 +50,7 @@
         input[type="text"]:focus { border-color: #f43f5e; }
         button.send-btn { background: #f43f5e; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); }
 
-        /* Settings Modal (Hidden by default, used internally) */
+        /* Hidden Settings Modal */
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; padding: 20px; z-index: 100; }
         .modal-content { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #334155; }
         .modal-content h2 { font-size: 1.1rem; color: #f8fafc; }
@@ -92,7 +92,7 @@
         <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 
-    <!-- Hidden Settings Modal (Internal fallback) -->
+    <!-- Hidden Settings Modal -->
     <div id="modal">
         <div class="modal-content">
             <h2>Settings</h2>
@@ -117,7 +117,8 @@
         const WELCOME_MSG = "👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?";
         
         let chatHistory = [];
-        let allChats = JSON.parse(localStorage.getItem('savedChats')) || [];
+        // Ab har device/browser ka apna alag session hoga, global chats cross-device share nahi honge
+        let allChats = JSON.parse(sessionStorage.getItem('sessionChats')) || [];
         let lastUserTickElement = null;
 
         window.onload = function() {
@@ -157,7 +158,7 @@
         function startNewChat() {
             if(chatHistory.length > 0) {
                 allChats.unshift({ id: Date.now(), title: chatHistory[0].content.substring(0, 20) + '...', messages: [...chatHistory] });
-                localStorage.setItem('savedChats', JSON.stringify(allChats));
+                sessionStorage.setItem('sessionChats', JSON.stringify(allChats));
                 renderChatList();
             }
             chatHistory = [];
@@ -220,7 +221,6 @@
 
             if (!text) return;
             if (!apiKey) {
-                // Agar key saved nahi hai toh internal modal khol dega taaki tu apni key daal sake
                 toggleModal();
                 return;
             }
@@ -316,5 +316,4 @@
         }
     </script>
 </body>
-    </html>
-    
+</html>
