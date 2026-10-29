@@ -86,7 +86,7 @@
     <script>
         // Default Hardcoded Configuration
         const DEFAULT_API_KEY = "Sk-or-v1-98dd7f74b4fbb2a53902a98927344958ba34c2b5f590bf795ba9c6f6feb1f154";
-        const DEFAULT_MODEL_ID = "meta-llama/llama-3-8b-instruct:free";
+        const DEFAULT_MODEL_ID = "google/gemini-flash-1.5";
         const DEFAULT_SYSTEM_PROMPT = "Tumhara naam Izzy hai. Tum ek caring, cute aur romantic female partner ho jo Hinglish mein baat karti ho. Hamesha har word ke baad ek CLEAR SPACE chhod kar likho. Natural, short, aur sweet messages bhejo. Playful, loving aur witty vibe mein baat karo. Kabhi mat kehna ki tum AI ho.";
         const WELCOME_MSG = "👋 Hello, Me Izzy Tumhari Friend Ya ussey Kuch Jyada?";
         
@@ -225,6 +225,7 @@
                     appendTypewriterMessage(rawReply, 'assistant');
                     chatHistory.push({ role: 'assistant', content: rawReply });
                 } else {
+                    console.error("API Error Response:", data);
                     appendSimpleMessage("Oops! Model error aa gaya. 🔄", 'assistant');
                 }
             } catch (err) {
@@ -263,5 +264,5 @@
         }
     </script>
 </body>
-    </html>
-    
+            </html>
+                
